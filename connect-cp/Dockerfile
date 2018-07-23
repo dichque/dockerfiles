@@ -1,3 +1,13 @@
+FROM confluentinc/cp-kafka-connect:4.1.1 AS cp
+
+RUN curl -SLs https://s3-us-west-2.amazonaws.com/confluent-hub-client/confluent-hub-client-latest.tar.gz | tar -xzf - -C /usr
+
+RUN confluent-hub install --no-prompt --verbose confluentinc/kafka-connect-gcs:latest
+
+RUN find . -name kafka-connect*.jar
+
+RUN cat /usr/share/confluent-hub-components/confluentinc-kafka-connect-gcs/etc/quickstart-gcs.properties
+
 FROM solsson/kafka@sha256:7bd3e6f23a40cbd73f0e7e986c1d6bcf3f3892a5b73f2e3300ff844b0dd41ba8
 
 # referenced from dependency versions in the maven pom
