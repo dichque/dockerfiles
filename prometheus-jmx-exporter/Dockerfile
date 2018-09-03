@@ -3,11 +3,15 @@ FROM solsson/kafka-jre@sha256:06dabfc8cacd0687c8f52c52afd650444fb6d4a8e0b85f6855
 ENV EXPORTER_VERSION=parent-0.2.0
 ENV EXPORTER_REPO=github.com/prometheus/jmx_exporter
 
+# USER 10001
+
 WORKDIR /usr/local/
+COPY uid_entrypoint bin/
+COPY run bin/
 
 RUN set -ex; \
   DEBIAN_FRONTEND=noninteractive; \
-  runDeps=''; \
+  runDeps='lsof procps net-tools'; \
   buildDeps='curl ca-certificates'; \
   apt-get update && apt-get install -y $runDeps $buildDeps --no-install-recommends; \
   \
@@ -28,9 +32,12 @@ RUN set -ex; \
   \
   apt-get purge -y --auto-remove $buildDeps; \
   rm -rf /var/lib/apt/lists/*; \
-  rm -rf /var/log/dpkg.log /var/log/alternatives.log /var/log/apt
+  rm -rf /var/log/dpkg.log /var/log/alternatives.log /var/log/apt; \
+  chmod -R u+x /usr/local/bin; \
+  chgrp -R 0 /usr/local; \
+  chmod -R g=u /etc/passwd
 
 COPY collect-all-slow.yml example_configs/
 
-ENTRYPOINT ["java", "-jar", "jmx_prometheus_httpserver.jar"]
-CMD ["5556", "example_configs/collect-all-slow.yml"]
+ENTRYPOINT [ "uid_entrypoint" ]
+CMD run
